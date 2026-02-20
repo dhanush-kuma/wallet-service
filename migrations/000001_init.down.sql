@@ -1,0 +1,9 @@
+DROP INDEX IF EXISTS idx_ledger_wallet_direction;
+DROP INDEX IF EXISTS idx_ledger_transaction_id;
+DROP INDEX IF EXISTS idx_wallets_user_id;
+DROP TABLE IF EXISTS ledger_entries;
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS wallets;
+DROP TABLE IF EXISTS assets;
+DROP TABLE IF EXISTS users;
+DROP TYPE IF EXISTS entry_direction;

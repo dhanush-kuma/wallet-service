@@ -1,6 +1,6 @@
 INSERT INTO assets (id, code) VALUES 
-(1, 'Gold Coins'),
-(2, 'Diamonds')
+(1, 'GOLD'),
+(2, 'DIAMOND')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO users (id, name) VALUES
@@ -12,6 +12,7 @@ INSERT INTO wallets (id, label, user_id, asset_type_id, balance) VALUES
 ('00000000-0000-0000-0000-000000000000', 'Treasury Gold', NULL, 1, 9999000),
 ('00000000-0000-0000-0000-000000000001', 'Treasury Diamond', NULL, 2, 9999900),
 ('00000000-0000-0000-0000-000000000002', 'Revenue Diamond', NULL, 2, 10),
+('00000000-0000-0000-0000-000000000003', 'Revenue Gold', NULL, 1, 0),
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Mikasa Gold Wallet', 'e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', 1, 1000),
 ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Eren Diamond Wallet', 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 2, 90)
 ON CONFLICT (id) DO NOTHING;

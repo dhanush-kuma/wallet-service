@@ -36,6 +36,12 @@ func main() {
 	// Wallet routes
 	r.GET("/wallets/:wallet_id/balance", handler.GetBalance)
 
+	r.POST("/wallets/:wallet_id/topup", handler.TopUpWallet)
+
+	r.POST("/wallets/:wallet_id/bonus", handler.GrantBonus)
+
+	r.POST("/wallets/:wallet_id/spend", handler.Spend)
+
 	log.Println("Server starting on :8080...")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)

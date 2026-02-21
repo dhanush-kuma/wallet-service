@@ -27,10 +27,170 @@ func (r *Repository) GetWalletBalance(ctx context.Context, walletId uuid.UUID) (
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows){
-			return 0,fmt.Errorf("wallet with id %s not found", walletId)
-		}
-		return 0,err
+			return 0, fmt.Errorf("wallet with id %s not found: %w", walletId, pgx.ErrNoRows)
+    }
+    return 0, fmt.Errorf("database query failed: %w", err)
 	}
 
 	return balance,nil
+}
+
+func (r *Repository) GetWalletAssetCode(
+    ctx context.Context,
+    walletID uuid.UUID,
+) (string, error) {
+
+    var code string
+
+    err := r.pool.QueryRow(ctx, `
+        SELECT a.code
+        FROM wallets w
+        JOIN assets a ON a.id = w.asset_type_id
+        WHERE w.id = $1
+    `, walletID).Scan(&code)
+
+    return code, err
+}
+
+func (r *Repository) Transfer(
+    ctx context.Context,
+    referenceID string,
+    fromWalletID uuid.UUID,
+    toWalletID uuid.UUID,
+    amount int64,
+) error {
+
+    if amount <= 0 {
+        return fmt.Errorf("amount must be positive")
+    }
+
+    tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback(ctx)
+
+
+    // check if transaction already completed
+
+    var existingID uuid.UUID
+    err = tx.QueryRow(ctx,
+        `SELECT id FROM transactions WHERE reference_id = $1`,
+        referenceID,
+    ).Scan(&existingID)
+
+    if err == nil {
+        return tx.Commit(ctx)
+    }
+    if !errors.Is(err, pgx.ErrNoRows) {
+        return err
+    }
+
+
+    // Lock wallets in deterministic order
+
+    var first, second uuid.UUID
+    if fromWalletID.String() < toWalletID.String() {
+        first, second = fromWalletID, toWalletID
+    } else {
+        first, second = toWalletID, fromWalletID
+    }
+
+    // lock first wallet
+    if _, err := tx.Exec(ctx,
+        `SELECT id FROM wallets WHERE id = $1 FOR UPDATE`,
+        first,
+    ); err != nil {
+        return err
+    }
+
+    // lock second wallet
+    if _, err := tx.Exec(ctx,
+        `SELECT id FROM wallets WHERE id = $1 FOR UPDATE`,
+        second,
+    ); err != nil {
+        return err
+    }
+
+
+    // Check balance
+
+    var balance int64
+    err = tx.QueryRow(ctx,
+        `SELECT balance FROM wallets WHERE id = $1`,
+        fromWalletID,
+    ).Scan(&balance)
+    if err != nil {
+        return err
+    }
+
+    if balance < amount {
+        return fmt.Errorf("insufficient balance")
+    }
+
+
+    // Create transaction record
+
+    txnID := uuid.New()
+
+    _, err = tx.Exec(ctx,
+        `INSERT INTO transactions (id, reference_id, type, status)
+         VALUES ($1, $2, 'transfer', 'completed')`,
+        txnID,
+        referenceID,
+    )
+    if err != nil {
+        return err
+    }
+
+
+    // Insert ledger entries (double entry)
+
+    debitEntryID := uuid.New()
+    creditEntryID := uuid.New()
+
+    _, err = tx.Exec(ctx,
+        `INSERT INTO ledger_entries
+            (id, transaction_id, wallet_id, direction, amount)
+         VALUES
+            ($1, $2, $3, 'debit', $4),
+            ($5, $2, $6, 'credit', $4)`,
+        debitEntryID,
+        txnID,
+        fromWalletID,
+        amount,
+        creditEntryID,
+        toWalletID,
+    )
+    if err != nil {
+        return err
+    }
+
+
+    // Update cached balances
+
+    _, err = tx.Exec(ctx,
+        `UPDATE wallets
+         SET balance = balance - $1
+         WHERE id = $2`,
+        amount,
+        fromWalletID,
+    )
+    if err != nil {
+        return err
+    }
+
+    _, err = tx.Exec(ctx,
+        `UPDATE wallets
+         SET balance = balance + $1
+         WHERE id = $2`,
+        amount,
+        toWalletID,
+    )
+    if err != nil {
+        return err
+    }
+
+
+    return tx.Commit(ctx)
 }

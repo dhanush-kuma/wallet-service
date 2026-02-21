@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS wallets (
     label TEXT,
     user_id UUID NULL REFERENCES users(id),
     asset_type_id INT NOT NULL REFERENCES assets(id),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    balance BIGINT CHECK (balance >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS transactions (

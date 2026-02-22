@@ -250,3 +250,19 @@ func (s *Service) CreateWallet(
 
     return id, nil
 }
+
+func (s *Service) GetTransactions(
+	ctx context.Context,
+	limit int,
+	offset int,
+) ([]Transaction, error) {
+	return s.repo.ListTransactions(ctx, limit, offset)
+}
+
+func (s *Service) GetLedgerEntries(
+	ctx context.Context,
+	limit int,
+	offset int,
+) ([]LedgerEntry, error) {
+	return s.repo.ListLedgerEntries(ctx, limit, offset)
+}

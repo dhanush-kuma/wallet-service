@@ -3,6 +3,7 @@ package api
 import (
     "net/http"
 	"errors"
+    "strconv"
 
     "github.com/gin-gonic/gin"
     "wallet-service/internal/wallet"
@@ -260,4 +261,53 @@ func (h *Handler) CreateWallet(c *gin.Context) {
     }
 
     c.JSON(http.StatusOK, gin.H{"wallet_id": id})
+}
+
+func (h *Handler) GetTransactions(c *gin.Context) {
+	limit, offset := parsePagination(c)
+
+	data, err := h.walletService.GetTransactions(
+		c.Request.Context(),
+		limit,
+		offset,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+func (h *Handler) GetLedgerEntries(c *gin.Context) {
+	limit, offset := parsePagination(c)
+
+	data, err := h.walletService.GetLedgerEntries(
+		c.Request.Context(),
+		limit,
+		offset,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+func parsePagination(c *gin.Context) (int, int) {
+	limitStr := c.DefaultQuery("limit", "50")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	if limit <= 0 || limit > 100 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	return limit, offset
 }

@@ -250,3 +250,76 @@ func (r *Repository) CreateWallet(
 
     return err
 }
+
+func (r *Repository) ListTransactions(
+	ctx context.Context,
+	limit int,
+	offset int,
+) ([]Transaction, error) {
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, reference_id, type, status, created_at
+		FROM transactions
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var txs []Transaction
+
+	for rows.Next() {
+		var t Transaction
+		if err := rows.Scan(
+			&t.ID,
+			&t.ReferenceID,
+			&t.Type,
+			&t.Status,
+			&t.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		txs = append(txs, t)
+	}
+
+	return txs, rows.Err()
+}
+
+func (r *Repository) ListLedgerEntries(
+	ctx context.Context,
+	limit int,
+	offset int,
+) ([]LedgerEntry, error) {
+
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, transaction_id, wallet_id, direction, amount, created_at
+		FROM ledger_entries
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []LedgerEntry
+
+	for rows.Next() {
+		var e LedgerEntry
+		if err := rows.Scan(
+			&e.ID,
+			&e.TransactionID,
+			&e.WalletID,
+			&e.Direction,
+			&e.Amount,
+			&e.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		entries = append(entries, e)
+	}
+
+	return entries, rows.Err()
+}

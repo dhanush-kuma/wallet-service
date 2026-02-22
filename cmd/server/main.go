@@ -48,6 +48,10 @@ func main() {
 	
 	r.POST("/assets", handler.CreateAsset)
 
+	r.GET("/transactions", handler.GetTransactions)
+	
+	r.GET("/ledger-entries", handler.GetLedgerEntries)
+
 	log.Println("Server starting on :8080...")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)

@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: wallet-postgres
+    environment:
+      POSTGRES_USER: wallet
+      POSTGRES_PASSWORD: wallet
+      POSTGRES_DB: walletdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: wallet-app
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://wallet:wallet@postgres:5432/walletdb?sslmode=disable
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:

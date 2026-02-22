@@ -86,7 +86,6 @@ Required:
 
 
     DATABASE_URL=postgres://user:pass@host:5432/dbname?sslmode=require
-    PORT=8080
 
 
 ------------------------------------------------------------------------
@@ -468,4 +467,5 @@ The service handles:
 
 
 Designed to scale toward **millions of users**.
+
 

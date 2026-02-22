@@ -92,7 +92,7 @@ Required:
 ------------------------------------------------------------------------
 
 
-## API Endpoints
+## API Endpoints for Testing with Postman
 
 
 ### Get balance
@@ -255,10 +255,8 @@ no incorrect double entry
 ------------------------------------------------------------------------
 
 
-## Testing with Postman
 
-
-Core of all transactions in system:
+# Core of all transactions in system:
 
 
 ``` go
@@ -470,3 +468,4 @@ The service handles:
 
 
 Designed to scale toward **millions of users**.
+

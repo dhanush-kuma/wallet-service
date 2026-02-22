@@ -42,6 +42,12 @@ func main() {
 
 	r.POST("/wallets/:wallet_id/spend", handler.Spend)
 
+	r.POST("/users", handler.CreateUser)
+
+	r.POST("/wallets", handler.CreateWallet)
+	
+	r.POST("/assets", handler.CreateAsset)
+
 	log.Println("Server starting on :8080...")
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal(err)

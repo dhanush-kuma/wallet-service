@@ -194,3 +194,59 @@ func (r *Repository) Transfer(
 
     return tx.Commit(ctx)
 }
+
+func (r *Repository) CreateUser(
+    ctx context.Context,
+    id uuid.UUID,
+    name string,
+) error {
+    _, err := r.pool.Exec(ctx, `
+        INSERT INTO users (id, name)
+        VALUES ($1, $2)
+    `, id, name)
+
+    return err
+}
+
+func (r *Repository) CreateAsset(
+    ctx context.Context,
+    code string,
+) (int, error) {
+
+    var id int
+
+    err := r.pool.QueryRow(ctx, `
+        INSERT INTO assets (code)
+        VALUES ($1)
+        RETURNING id
+    `, code).Scan(&id)
+
+    return id, err
+}
+
+func (r *Repository) CreateWallet(
+    ctx context.Context,
+    id uuid.UUID,
+    label string,
+    userID *uuid.UUID,
+    assetTypeID int,
+) error {
+
+    _, err := r.pool.Exec(ctx, `
+        INSERT INTO wallets (
+            id,
+            label,
+            user_id,
+            asset_type_id,
+            balance
+        )
+        VALUES ($1, $2, $3, $4, 0)
+    `,
+        id,
+        label,
+        userID,
+        assetTypeID,
+    )
+
+    return err
+}

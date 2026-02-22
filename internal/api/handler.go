@@ -32,6 +32,20 @@ type SpendRequest struct {
     Amount      int64  `json:"amount" binding:"required,gt=0"`
 }
 
+type CreateUserRequest struct {
+    Name string `json:"name" binding:"required"`
+}
+
+type CreateAssetRequest struct {
+    Code string `json:"code" binding:"required"`
+}
+
+type CreateWalletRequest struct {
+    Label       string  `json:"label" binding:"required"`
+    UserID      *string `json:"user_id"` // optional
+    AssetTypeID int     `json:"asset_type_id" binding:"required"`
+}
+
 func NewHandler(ws *wallet.Service) *Handler{
 	return &Handler{walletService: ws}
 }
@@ -173,4 +187,77 @@ func (h *Handler) Spend(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{
         "status": "spend successful",
     })
+}
+
+func (h *Handler) CreateUser(c *gin.Context) {
+    var req CreateUserRequest
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    id, err := h.walletService.CreateUser(
+        c.Request.Context(),
+        req.Name,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"user_id": id})
+}
+
+func (h *Handler) CreateAsset(c *gin.Context) {
+    var req CreateAssetRequest
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    id, err := h.walletService.CreateAsset(
+        c.Request.Context(),
+        req.Code,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"asset_id": id})
+}
+
+func (h *Handler) CreateWallet(c *gin.Context) {
+    var req CreateWalletRequest
+
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    var userUUID *uuid.UUID
+
+    if req.UserID != nil {
+        parsed, err := uuid.Parse(*req.UserID)
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+            return
+        }
+        userUUID = &parsed
+    }
+
+    id, err := h.walletService.CreateWallet(
+        c.Request.Context(),
+        req.Label,
+        userUUID,
+        req.AssetTypeID,
+    )
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"wallet_id": id})
 }

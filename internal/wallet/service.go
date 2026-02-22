@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
     "github.com/jackc/pgx/v5/pgconn"
@@ -200,4 +201,52 @@ func (s *Service) SpendFromWallet(
     }
 
     return errors.New("spend failed after retries")
+}
+
+func (s *Service) CreateUser(
+    ctx context.Context,
+    name string,
+) (uuid.UUID, error) {
+
+    id := uuid.New()
+
+    err := s.repo.CreateUser(ctx, id, name)
+    if err != nil {
+        return uuid.Nil, err
+    }
+
+    return id, nil
+}
+
+func (s *Service) CreateAsset(
+    ctx context.Context,
+    code string,
+) (int, error) {
+
+    code = strings.ToUpper(strings.TrimSpace(code))
+
+    return s.repo.CreateAsset(ctx, code)
+}
+
+func (s *Service) CreateWallet(
+    ctx context.Context,
+    label string,
+    userID *uuid.UUID,
+    assetTypeID int,
+) (uuid.UUID, error) {
+
+    id := uuid.New()
+
+    err := s.repo.CreateWallet(
+        ctx,
+        id,
+        label,
+        userID,
+        assetTypeID,
+    )
+    if err != nil {
+        return uuid.Nil, err
+    }
+
+    return id, nil
 }

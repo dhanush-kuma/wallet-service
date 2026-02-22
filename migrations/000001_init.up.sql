@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS assets (
-    id SERIAL PRIMARY KEY,
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code TEXT NOT NULL UNIQUE
 );
 
@@ -15,8 +15,13 @@ CREATE TABLE IF NOT EXISTS wallets (
     user_id UUID NULL REFERENCES users(id),
     asset_type_id INT NOT NULL REFERENCES assets(id),
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    balance BIGINT CHECK (balance >= 0)
+    balance BIGINT NOT NULL DEFAULT 0 CHECK (balance >= 0)
 );
+
+-- one wallet per user per asset
+CREATE UNIQUE INDEX IF NOT EXISTS unique_user_asset_wallet
+ON wallets(user_id, asset_type_id)
+WHERE user_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY,

@@ -1,6 +1,6 @@
-INSERT INTO assets (id, code) VALUES 
-(1, 'GOLD'),
-(2, 'DIAMOND')
+INSERT INTO assets (code) VALUES 
+('GOLD'),
+('DIAMOND')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO users (id, name) VALUES
